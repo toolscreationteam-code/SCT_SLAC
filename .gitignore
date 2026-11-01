@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+client/node_modules/
+
+# Environment variables (contains DB password!)
+.env
+*.env
+*.env.local
+
+# Builds
+dist-electron/
+dist/
+client/dist/
+
+# Large binaries and user uploads
+*.exe
+uploads/
+public/download/
+client/public/download/
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vscode/
+.idea/
