@@ -9,6 +9,7 @@
     "server": "node server/server.js",
     "client": "cd client && npm run dev",
     "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,green\" \"node server/server.js\" \"cd client && npm run dev\"",
+    "postinstall": "cd client && npm install",
     "build": "cd client && npm run build",
     "desktop": "electron desktop/main.cjs",
     "build:exe": "electron-builder --win portable"
