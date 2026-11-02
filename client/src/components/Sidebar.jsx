@@ -278,7 +278,7 @@ export default function Sidebar({
         {/* Actions: Download Desktop App & Logout */}
         <div className="flex items-center gap-1">
           <a
-            href="/api/download/setup"
+            href={`${window.BACKEND_URL || ''}/api/download/setup`}
             download="SCT-Slack-Setup.exe"
             className="p-1.5 rounded-md hover:bg-white/10 text-amber-300/80 hover:text-amber-300 transition-colors"
             title="Download SCT Slack Desktop Installer (.exe)"

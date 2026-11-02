@@ -179,7 +179,13 @@ export default function App() {
   useEffect(() => {
     if (!currentUser?.id) return;
 
-    const socketUrl = window.location.port === '5173' ? 'http://localhost:5000' : '/';
+    const isRenderOrLocal = 
+      window.location.hostname.includes('onrender.com') || 
+      window.location.hostname === 'localhost' || 
+      window.location.hostname === '127.0.0.1';
+    const socketUrl = isRenderOrLocal 
+      ? (window.location.port === '5173' ? 'http://localhost:5000' : '/')
+      : 'https://sct-slac.onrender.com';
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 

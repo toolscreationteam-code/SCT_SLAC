@@ -632,9 +632,9 @@ export default function ChatArea({
                     {/* Attached Image */}
                     {msg.file_url && msg.file_type?.startsWith('image/') && (
                       <div className="mt-2 max-w-sm rounded-lg overflow-hidden border border-black/20 bg-black/20">
-                        <a href={msg.file_url} target="_blank" rel="noreferrer">
+                        <a href={msg.file_url.startsWith('http') ? msg.file_url : `${window.BACKEND_URL || ''}${msg.file_url}`} target="_blank" rel="noreferrer">
                           <img
-                            src={msg.file_url}
+                            src={msg.file_url.startsWith('http') ? msg.file_url : `${window.BACKEND_URL || ''}${msg.file_url}`}
                             alt={msg.file_name || 'Attachment'}
                             className="w-full max-h-72 object-cover hover:opacity-90 transition-opacity cursor-pointer rounded-lg"
                           />
@@ -652,7 +652,7 @@ export default function ChatArea({
                           </p>
                         </div>
                         <a
-                          href={msg.file_url}
+                          href={msg.file_url.startsWith('http') ? msg.file_url : `${window.BACKEND_URL || ''}${msg.file_url}`}
                           download={msg.file_name}
                           target="_blank"
                           rel="noreferrer"

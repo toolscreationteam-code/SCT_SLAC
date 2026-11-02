@@ -3,6 +3,28 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 
+// Dynamic backend URL resolution for multi-host deployment (Render / Hostinger / Desktop)
+const isRenderOrLocal = 
+  window.location.hostname.includes('onrender.com') || 
+  window.location.hostname === 'localhost' || 
+  window.location.hostname === '127.0.0.1';
+
+export const BACKEND_URL = isRenderOrLocal ? '' : 'https://sct-slac.onrender.com';
+window.BACKEND_URL = BACKEND_URL;
+
+// Automatically route API requests to the live Render backend when hosted under Hostinger /sct or desktop
+if (BACKEND_URL) {
+  const originalFetch = window.fetch;
+  window.fetch = (url, options) => {
+    if (typeof url === 'string') {
+      if (url.startsWith('/api') || url.startsWith('/uploads') || url.startsWith('/download')) {
+        url = `${BACKEND_URL}${url}`;
+      }
+    }
+    return originalFetch(url, options);
+  };
+}
+
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
