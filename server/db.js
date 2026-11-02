@@ -28,7 +28,6 @@ const pool = mysql.createPool({
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
-  family: 4, // Force IPv4 to eliminate IPv6 ENETUNREACH
   connectTimeout: 10000
 });
 

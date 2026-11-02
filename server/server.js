@@ -200,8 +200,7 @@ app.get('/api/test-db', async (req, res) => {
       password: process.env.DB_PASSWORD || '8yc7zuc8z*A',
       database: testDb,
       port: 3306,
-      connectTimeout: 5000,
-      family: 4
+      connectTimeout: 5000
     });
     const [rows] = await conn.query('SELECT 1 as success');
     await conn.end();
