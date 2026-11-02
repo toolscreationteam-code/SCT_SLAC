@@ -9,7 +9,7 @@ services:
       - key: PORT
         value: 10000
       - key: DB_HOST
-        value: auth-db1408.hstgr.io
+        value: 91.108.107.40
       - key: DB_USER
         value: u339048620_stk
       - key: DB_PASSWORD
