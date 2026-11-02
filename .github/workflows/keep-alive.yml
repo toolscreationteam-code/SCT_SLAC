@@ -1,0 +1,17 @@
+name: Keep SCT Slack Alive
+
+on:
+  schedule:
+    # Runs every 10 minutes (Render sleeps after 15 minutes of inactivity)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping SCT Slack API
+        run: |
+          echo "Pinging SCT Slack server on Render..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://sct-slac.onrender.com/api/health")
+          echo "Response code: $HTTP_STATUS"
