@@ -10,8 +10,7 @@ import {
   Bell,
   Search,
   MessageSquare,
-  Lock,
-  Download
+  Lock
 } from 'lucide-react';
 import { DEFAULT_MEMBERS, AVATAR_COLORS } from '../constants/members';
 
@@ -286,16 +285,8 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* Actions: Download Desktop App & Logout */}
+        {/* Logout Action */}
         <div className="flex items-center gap-1">
-          <a
-            href={`${window.BACKEND_URL || ''}/api/download/setup`}
-            download="SCT-Slack-Setup.exe"
-            className="p-1.5 rounded-md hover:bg-white/10 text-amber-300/80 hover:text-amber-300 transition-colors"
-            title="Download SCT Slack Desktop Installer (.exe)"
-          >
-            <Download className="w-4 h-4" />
-          </a>
           <button
             onClick={onLogout}
             className="p-1.5 rounded-md hover:bg-red-500/20 text-gray-400 hover:text-red-300 transition-colors"
