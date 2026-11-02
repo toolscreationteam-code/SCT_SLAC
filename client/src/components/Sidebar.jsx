@@ -39,7 +39,7 @@ export default function Sidebar({
 
   const safeChannels = Array.isArray(channels) ? channels : [];
   const safeUsers = Array.isArray(users) && users.length > 0 ? users : DEFAULT_MEMBERS;
-  const safeOnlineUsers = Array.isArray(onlineUsers) ? onlineUsers : [];
+  const safeOnlineUsers = (Array.isArray(onlineUsers) ? onlineUsers : []).map(Number);
 
   const regularChannels = safeChannels.filter((c) => !c.is_direct);
   const filteredChannels = regularChannels.filter((c) =>
@@ -172,7 +172,7 @@ export default function Sidebar({
 
           <div className="mt-1 space-y-0.5">
             {filteredOtherUsers.map((user) => {
-              const isOnline = safeOnlineUsers.includes(user.id);
+              const isOnline = safeOnlineUsers.includes(Number(user.id));
               const minId = Math.min(Number(currentUser?.id || 0), Number(user.id));
               const maxId = Math.max(Number(currentUser?.id || 0), Number(user.id));
               const expectedDmName = `dm_${minId}_${maxId}`;
@@ -210,12 +210,16 @@ export default function Sidebar({
                 >
                   <div className="flex items-center gap-2 truncate">
                     <span
-                      className={`w-2 h-2 rounded-full shrink-0 ${
-                        isOnline ? 'bg-emerald-400 ring-2 ring-emerald-950' : 'bg-gray-500'
+                      className={`w-2.5 h-2.5 rounded-full shrink-0 transition-all ${
+                        isOnline
+                          ? 'bg-emerald-400 ring-2 ring-emerald-900 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse'
+                          : 'bg-gray-500/60'
                       }`}
                       title={isOnline ? 'Online' : 'Offline'}
                     />
-                    <span className="truncate">{user.name}</span>
+                    <span className={`truncate ${isOnline ? 'font-semibold text-white' : ''}`}>
+                      {user.name}
+                    </span>
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">

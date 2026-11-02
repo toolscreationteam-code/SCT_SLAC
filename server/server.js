@@ -304,6 +304,11 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+// Real-time online users list endpoint
+app.get('/api/online-users', (req, res) => {
+  res.json(Array.from(onlineUsers.keys()));
+});
+
 // 4. Get channels & DMs for a user (with persistent unread counts)
 app.get('/api/channels', async (req, res) => {
   try {
@@ -1212,7 +1217,15 @@ app.delete('/api/admin/users/:userId', async (req, res) => {
 io.on('connection', (socket) => {
   let currentUserId = null;
 
-  socket.on('user_connected', async (userId) => {
+  // Immediately send currently online users to the newly connected socket
+  socket.emit('online_users', Array.from(onlineUsers.keys()));
+
+  socket.on('get_online_users', () => {
+    socket.emit('online_users', Array.from(onlineUsers.keys()));
+  });
+
+  socket.on('user_connected', (userId) => {
+    if (!userId) return;
     currentUserId = Number(userId);
     if (!onlineUsers.has(currentUserId)) {
       onlineUsers.set(currentUserId, new Set());
@@ -1220,22 +1233,22 @@ io.on('connection', (socket) => {
     onlineUsers.get(currentUserId).add(socket.id);
     socket.join(`user_${currentUserId}`);
 
-    // Automatically join all channel rooms this user belongs to
-    try {
-      const [userChans] = await pool.query(
-        `SELECT c.id FROM SCT_channels c
-         LEFT JOIN SCT_channel_members cm ON c.id = cm.channel_id AND cm.user_id = ?
-         WHERE cm.user_id IS NOT NULL OR c.is_direct = 0`,
-        [currentUserId]
-      );
+    // Instant 0ms broadcast to everyone that this user is online
+    io.emit('online_users', Array.from(onlineUsers.keys()));
+
+    // Automatically join all channel rooms this user belongs to in background
+    pool.query(
+      `SELECT c.id FROM SCT_channels c
+       LEFT JOIN SCT_channel_members cm ON c.id = cm.channel_id AND cm.user_id = ?
+       WHERE cm.user_id IS NOT NULL OR c.is_direct = 0`,
+      [currentUserId]
+    ).then(([userChans]) => {
       for (const ch of userChans) {
         socket.join(`channel_${ch.id}`);
       }
-    } catch (err) {
+    }).catch((err) => {
       console.error('Error joining user channels:', err);
-    }
-
-    io.emit('online_users', Array.from(onlineUsers.keys()));
+    });
   });
 
   socket.on('join_channel', (channelId) => {

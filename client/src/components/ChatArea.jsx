@@ -131,7 +131,7 @@ export default function ChatArea({
         role: m.role,
         team_name: teamStr,
         avatar: m.avatar || nameStr.slice(0, 2),
-        isOnline: (onlineUsers || []).includes(m.id),
+        isOnline: (onlineUsers || []).map(Number).includes(Number(m.id)),
         desc: userStr
           ? `@${userStr} • ${m.role === 'hod_admin' ? 'HOD' : teamStr || 'Member'}`
           : (m.role === 'hod_admin' ? 'HOD' : teamStr || 'Member')
@@ -204,7 +204,7 @@ export default function ChatArea({
       })
     : null;
 
-  const isDMPartnerOnline = isDM && dmPartner ? (onlineUsers || []).includes(dmPartner.id) : false;
+  const isDMPartnerOnline = isDM && dmPartner ? (onlineUsers || []).map(Number).includes(Number(dmPartner.id)) : false;
 
   // Check posting permissions
   let canPost = true;

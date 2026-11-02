@@ -189,16 +189,46 @@ export default function App() {
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
-    socket.on('connect', () => {
+    const fetchOnlineUsers = async () => {
+      try {
+        const res = await fetch('/api/online-users');
+        if (res.ok) {
+          const list = await res.json();
+          if (Array.isArray(list)) {
+            setOnlineUsers(list.map(Number));
+          }
+        }
+      } catch (e) {}
+    };
+
+    const handleConnect = () => {
       socket.emit('user_connected', currentUser.id);
+      socket.emit('get_online_users');
+      fetchOnlineUsers();
       if (activeChannelRef.current?.id) {
         socket.emit('join_channel', activeChannelRef.current.id);
       }
-    });
+    };
+
+    socket.on('connect', handleConnect);
+    socket.io?.on('reconnect', handleConnect);
+    if (socket.connected) {
+      handleConnect();
+    }
 
     socket.on('online_users', (list) => {
-      setOnlineUsers(list);
+      if (Array.isArray(list)) {
+        setOnlineUsers(list.map(Number));
+      }
     });
+
+    fetchOnlineUsers();
+    const heartbeatInterval = setInterval(() => {
+      fetchOnlineUsers();
+      if (socket.connected && currentUser?.id) {
+        socket.emit('user_connected', currentUser.id);
+      }
+    }, 10000);
 
     // Real-time message listener with active conversation detection
     socket.on('new_message', (msg) => {
@@ -345,6 +375,7 @@ export default function App() {
     });
 
     return () => {
+      clearInterval(heartbeatInterval);
       socket.disconnect();
     };
   }, [currentUser?.id]);
