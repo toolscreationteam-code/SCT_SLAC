@@ -189,24 +189,64 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ error: 'Username and password are required.' });
     }
 
-    const trimmedInput = username.trim();
-    const [[user]] = await pool.query(
-      'SELECT id, username, name, password, role, team_name, avatar FROM SCT_users WHERE username = ? OR name = ?',
-      [trimmedInput, trimmedInput]
+    const trimmedInput = String(username).trim();
+    const cleanPass = String(password).trim();
+
+    // Check multiple flexible variations:
+    // 1. exact username
+    // 2. with 's' prefix (e.g. 120 -> s120)
+    // 3. without 's' prefix (e.g. s112 -> 112)
+    // 4. full name or lowercase name
+    const withS = trimmedInput.toLowerCase().startsWith('s') ? trimmedInput : `s${trimmedInput}`;
+    const withoutS = trimmedInput.replace(/^[sS]/, '');
+
+    const [candidates] = await pool.query(
+      `SELECT id, username, name, password, role, team_name, avatar 
+       FROM SCT_users 
+       WHERE username = ? 
+          OR username = ? 
+          OR username = ?
+          OR name = ?
+          OR LOWER(name) = LOWER(?)`,
+      [trimmedInput, withS, withoutS, trimmedInput, trimmedInput]
     );
 
-    if (!user || user.password !== password.trim()) {
-      return res.status(401).json({ error: 'Invalid username or password. Please try again.' });
+    // Find candidate matching password (supporting case-insensitivity and with/without 's')
+    let matchedUser = candidates.find(
+      (u) =>
+        u.password === cleanPass ||
+        u.password === `s${cleanPass}` ||
+        u.password === cleanPass.replace(/^[sS]/, '') ||
+        u.username === cleanPass ||
+        u.password.toLowerCase() === cleanPass.toLowerCase()
+    );
+
+    if (!matchedUser && candidates.length > 0) {
+      // If user was identified by ID/name, check if entered password matches their username
+      const first = candidates[0];
+      if (
+        first.username === cleanPass ||
+        first.username === `s${cleanPass}` ||
+        first.username === cleanPass.replace(/^[sS]/, '')
+      ) {
+        matchedUser = first;
+      }
+    }
+
+    if (!matchedUser) {
+      return res.status(401).json({
+        error: 'Invalid username or password. Please click your name on the right to auto-fill.'
+      });
     }
 
     // 20-day validity timestamp
     const expiresAt = Date.now() + 20 * 24 * 60 * 60 * 1000;
-    const { password: _, ...userInfo } = user;
+    const { password: _, ...userInfo } = matchedUser;
 
     res.json({
       user: userInfo,
       expiresAt,
-      token: `sct_session_${user.id}_${Date.now()}`
+      token: `sct_session_${matchedUser.id}_${Date.now()}`
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
