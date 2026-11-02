@@ -480,7 +480,7 @@ export default function ChatArea({
             {isDM ? (
               <>
                 <MessageSquare className="w-5 h-5 text-blue-400" />
-                <span>Direct conversation with {activeChannel.dm_user?.name}</span>
+                <span>Direct conversation with {dmPartner?.name || activeChannel.dm_user?.name || 'Direct Message'}</span>
               </>
             ) : isAnnouncement ? (
               <>
@@ -1035,7 +1035,7 @@ export default function ChatArea({
               rows={2}
               placeholder={
                 isDM
-                  ? `Message ${activeChannel.dm_user?.name}...`
+                  ? `Message ${dmPartner?.name || activeChannel.dm_user?.name || 'member'}...`
                   : isAnnouncement
                   ? 'Write an announcement... (use @all or @name to mention)'
                   : `Message #${activeChannel.name || 'channel'}... (@name)`

@@ -174,13 +174,20 @@ export default function Sidebar({
           <div className="mt-1 space-y-0.5">
             {filteredOtherUsers.map((user) => {
               const isOnline = safeOnlineUsers.includes(user.id);
+              const minId = Math.min(Number(currentUser?.id || 0), Number(user.id));
+              const maxId = Math.max(Number(currentUser?.id || 0), Number(user.id));
+              const expectedDmName = `dm_${minId}_${maxId}`;
+
+              // Find if this DM channel already exists
+              const dmChannel = safeChannels.find(
+                (c) => c.is_direct && (Number(c.dm_user?.id) === Number(user.id) || c.name === expectedDmName)
+              );
+
               const isSelectedDM =
-                activeChannel?.is_direct && activeChannel?.dm_user?.id === user.id;
+                Boolean(activeChannel?.is_direct) &&
+                (Number(activeChannel?.dm_user?.id) === Number(user.id) || activeChannel?.name === expectedDmName);
 
               // Find if this DM has an unread count
-              const dmChannel = safeChannels.find(
-                (c) => c.is_direct && c.dm_user?.id === user.id
-              );
               const unreadCount = dmChannel
                 ? (unreadCounts[dmChannel.id] || unreadCounts[`user_${user.id}`] || 0)
                 : (unreadCounts[`user_${user.id}`] || 0);
@@ -189,7 +196,11 @@ export default function Sidebar({
                 <button
                   key={user.id}
                   onClick={() => {
-                    onStartDM(user);
+                    if (dmChannel) {
+                      onSelectChannel({ ...dmChannel, dm_user: dmChannel.dm_user || user });
+                    } else {
+                      onStartDM(user);
+                    }
                     if (onCloseMobile) onCloseMobile();
                   }}
                   className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left group ${

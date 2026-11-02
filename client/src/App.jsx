@@ -440,6 +440,33 @@ export default function App() {
   // Start or open Direct Message
   const handleStartDM = async (targetUser) => {
     if (!currentUser?.id || !targetUser?.id) return;
+
+    const minId = Math.min(currentUser.id, targetUser.id);
+    const maxId = Math.max(currentUser.id, targetUser.id);
+    const expectedDmName = `dm_${minId}_${maxId}`;
+
+    // 1. If channel already exists in loaded channels, switch INSTANTLY!
+    const existing = channels.find(
+      (c) => c.is_direct && (c.dm_user?.id === targetUser.id || c.name === expectedDmName)
+    );
+    if (existing) {
+      if (!existing.dm_user) existing.dm_user = targetUser;
+      setActiveChannel(existing);
+      markChannelAsRead(existing.id);
+      return;
+    }
+
+    // 2. Optimistic instant switch so UI updates immediately
+    const optimisticDM = {
+      id: expectedDmName,
+      name: expectedDmName,
+      is_direct: 1,
+      is_announcement: 0,
+      post_permission: 'all',
+      dm_user: targetUser
+    };
+    setActiveChannel(optimisticDM);
+
     try {
       // Clear DM unread badge immediately in UI
       setUnreadCounts((prev) => {
@@ -458,12 +485,12 @@ export default function App() {
       });
 
       const dmChannel = await res.json();
-      if (res.ok) {
+      if (res.ok && dmChannel) {
         if (!dmChannel.dm_user) {
           dmChannel.dm_user = targetUser;
         }
-        await fetchChannels(currentUser.id, dmChannel.id);
         setActiveChannel(dmChannel);
+        fetchChannels(currentUser.id, dmChannel.id);
         markChannelAsRead(dmChannel.id);
       }
     } catch (err) {
