@@ -255,7 +255,10 @@ app.post('/api/login', async (req, res) => {
       token: `sct_session_${matchedUser.id}_${Date.now()}`
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Login Error:', err);
+    res.status(500).json({ 
+      error: `Database connection error (${err.code || err.message || 'Timeout'}). Please check DB settings.` 
+    });
   }
 });
 
@@ -267,7 +270,8 @@ app.get('/api/users', async (req, res) => {
     );
     res.json(users);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Fetch users error:', err);
+    res.status(500).json({ error: `Database error (${err.code || err.message || 'Timeout'})` });
   }
 });
 
