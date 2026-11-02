@@ -91,7 +91,7 @@ const upload = multer({
   limits: { fileSize: 30 * 1024 * 1024 } // 30 MB
 });
 
-// Online users map: userId -> socketId
+// Online users map: userId -> Set of socketIds (supports multi-device / multi-tab)
 const onlineUsers = new Map();
 
 // Helper: extract @mentions from text and dispatch in-app notifications
@@ -1214,7 +1214,10 @@ io.on('connection', (socket) => {
 
   socket.on('user_connected', async (userId) => {
     currentUserId = Number(userId);
-    onlineUsers.set(currentUserId, socket.id);
+    if (!onlineUsers.has(currentUserId)) {
+      onlineUsers.set(currentUserId, new Set());
+    }
+    onlineUsers.get(currentUserId).add(socket.id);
     socket.join(`user_${currentUserId}`);
 
     // Automatically join all channel rooms this user belongs to
@@ -1248,8 +1251,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    if (currentUserId) {
-      onlineUsers.delete(currentUserId);
+    if (currentUserId && onlineUsers.has(currentUserId)) {
+      const socketSet = onlineUsers.get(currentUserId);
+      socketSet.delete(socket.id);
+      if (socketSet.size === 0) {
+        onlineUsers.delete(currentUserId);
+      }
       io.emit('online_users', Array.from(onlineUsers.keys()));
     }
   });
