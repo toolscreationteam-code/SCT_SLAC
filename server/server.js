@@ -227,52 +227,56 @@ app.post('/api/login', async (req, res) => {
     const trimmedInput = String(username).trim();
     const cleanPass = String(password).trim();
 
-    // Check multiple flexible variations:
-    // 1. exact username
-    // 2. with 's' prefix (e.g. 120 -> s120)
-    // 3. without 's' prefix (e.g. s112 -> 112)
-    // 4. full name or lowercase name
-    const withS = trimmedInput.toLowerCase().startsWith('s') ? trimmedInput : `s${trimmedInput}`;
-    const withoutS = trimmedInput.replace(/^[sS]/, '');
-
-    const [candidates] = await pool.query(
+    // 1. Strict Priority: Exact username or exact name match (case-insensitive)
+    // Note: 's112' (Khush Maharaj) and '112' (P Swayamprakashswami) are TWO DIFFERENT USERS.
+    // They must NEVER be combined or confused with each other.
+    let [matchedUsers] = await pool.query(
       `SELECT id, username, name, password, role, team_name, avatar 
        FROM SCT_users 
-       WHERE username = ? 
-          OR username = ? 
-          OR username = ?
-          OR name = ?
-          OR LOWER(name) = LOWER(?)`,
-      [trimmedInput, withS, withoutS, trimmedInput, trimmedInput]
+       WHERE LOWER(username) = LOWER(?) OR LOWER(name) = LOWER(?)`,
+      [trimmedInput, trimmedInput]
     );
 
-    // Find candidate matching password (supporting case-insensitivity and with/without 's')
-    let matchedUser = candidates.find(
-      (u) =>
-        u.password === cleanPass ||
-        u.password === `s${cleanPass}` ||
-        u.password === cleanPass.replace(/^[sS]/, '') ||
-        u.username === cleanPass ||
-        u.password.toLowerCase() === cleanPass.toLowerCase()
-    );
-
-    if (!matchedUser && candidates.length > 0) {
-      // If user was identified by ID/name, check if entered password matches their username
-      const first = candidates[0];
-      if (
-        first.username === cleanPass ||
-        first.username === `s${cleanPass}` ||
-        first.username === cleanPass.replace(/^[sS]/, '')
-      ) {
-        matchedUser = first;
+    // 2. Safe Fallback ONLY if NO exact match exists (e.g. user typed 120 instead of s120)
+    if (matchedUsers.length === 0) {
+      const withS = trimmedInput.toLowerCase().startsWith('s') ? trimmedInput : `s${trimmedInput}`;
+      const [fallback] = await pool.query(
+        `SELECT id, username, name, password, role, team_name, avatar 
+         FROM SCT_users 
+         WHERE LOWER(username) = LOWER(?)`,
+        [withS]
+      );
+      if (fallback.length > 0) {
+        matchedUsers = fallback;
       }
     }
 
-    if (!matchedUser) {
+    if (matchedUsers.length === 0) {
       return res.status(401).json({
-        error: 'Invalid username or password. Please click your name on the right to auto-fill.'
+        error: 'Invalid username. Please click your name on the right to auto-fill.'
       });
     }
+
+    const targetUser = matchedUsers[0];
+    const userPass = String(targetUser.password || '').trim();
+    const targetUsername = String(targetUser.username || '').trim();
+
+    // Validate password for this specific user
+    const isPassValid =
+      cleanPass === userPass ||
+      cleanPass.toLowerCase() === userPass.toLowerCase() ||
+      cleanPass === targetUsername ||
+      cleanPass.toLowerCase() === targetUsername.toLowerCase() ||
+      `s${cleanPass}` === userPass ||
+      cleanPass.replace(/^[sS]/, '') === userPass;
+
+    if (!isPassValid) {
+      return res.status(401).json({
+        error: 'Invalid password. Please check your credentials or click your name on the right.'
+      });
+    }
+
+    const matchedUser = targetUser;
 
     // 20-day validity timestamp
     const expiresAt = Date.now() + 20 * 24 * 60 * 60 * 1000;
