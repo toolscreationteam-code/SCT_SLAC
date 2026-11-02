@@ -35,7 +35,8 @@ function getSavedServerUrl() {
   } catch (err) {
     console.error('Error reading config:', err);
   }
-  return 'http://localhost:5000';
+  // Default to live cloud URL so desktop app works anywhere in the world without local server
+  return 'https://stkrequirement.eduhrmadm.in/sct';
 }
 
 function saveServerUrl(url) {
