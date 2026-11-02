@@ -2,14 +2,14 @@
   "name": "sct-slack",
   "version": "1.0.0",
   "description": "SCT Slack Web Application for Sadhana Creation Team",
-  "main": "desktop/main.cjs",
+  "main": "server/server.js",
   "type": "module",
   "scripts": {
     "start": "node server/server.js",
     "server": "node server/server.js",
     "client": "cd client && npm run dev",
     "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,green\" \"node server/server.js\" \"cd client && npm run dev\"",
-    "postinstall": "cd client && npm install",
+    "postinstall": "cd client && npm install && npm run build",
     "build": "cd client && npm run build",
     "desktop": "electron desktop/main.cjs",
     "build:exe": "electron-builder --win portable"
@@ -17,6 +17,9 @@
   "build": {
     "appId": "com.sct.slack",
     "productName": "SCT Slack",
+    "extraMetadata": {
+      "main": "desktop/main.cjs"
+    },
     "directories": {
       "output": "dist-electron"
     },

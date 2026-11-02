@@ -1,4 +1,13 @@
-const { app, BrowserWindow, shell, ipcMain, Menu, Tray } = require('electron');
+const electron = require('electron');
+
+// Safety guard: If accidentally executed via standard Node.js (e.g. cloud host), delegate to server
+if (!electron || typeof electron === 'string' || !electron.app) {
+  console.log('Detected standard Node.js runtime instead of Electron. Starting SCT Slack server...');
+  import('../server/server.js');
+  return;
+}
+
+const { app, BrowserWindow, shell, ipcMain, Menu, Tray } = electron;
 const path = require('path');
 const fs = require('fs');
 
