@@ -187,6 +187,36 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Diagnostic DB connection tester
+app.get('/api/test-db', async (req, res) => {
+  const mysql = await import('mysql2/promise');
+  const testHost = req.query.host || '91.108.107.40';
+  const testUser = req.query.user || process.env.DB_USER || 'u339048620_stk';
+  const testDb = req.query.db || process.env.DB_NAME || 'u339048620_stk';
+  try {
+    const conn = await mysql.default.createConnection({
+      host: testHost,
+      user: testUser,
+      password: process.env.DB_PASSWORD || '8yc7zuc8z*A',
+      database: testDb,
+      port: 3306,
+      connectTimeout: 5000,
+      family: 4
+    });
+    const [rows] = await conn.query('SELECT 1 as success');
+    await conn.end();
+    res.json({ success: true, host: testHost, user: testUser, db: testDb, rows });
+  } catch(err) {
+    res.status(500).json({ 
+      success: false, 
+      host: testHost, 
+      user: testUser,
+      error: err.message, 
+      code: err.code 
+    });
+  }
+});
+
 // 2. Authentication: Password Login with 20-day session
 app.post('/api/login', async (req, res) => {
   try {
