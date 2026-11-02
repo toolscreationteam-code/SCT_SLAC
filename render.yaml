@@ -13,7 +13,7 @@ services:
       - key: DB_USER
         value: u339048620_stkreq
       - key: DB_PASSWORD
-        sync: false
+        value: 8yc7zuc8z*A
       - key: DB_NAME
         value: u339048620_stkreq
       - key: DB_PORT

@@ -2,12 +2,18 @@ import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 dotenv.config();
 
+const dbHost = (process.env.DB_HOST && process.env.DB_HOST.trim()) || 'auth-db1408.hstgr.io';
+const dbUser = (process.env.DB_USER && process.env.DB_USER.trim()) || 'u339048620_stkreq';
+const dbPassword = (process.env.DB_PASSWORD && process.env.DB_PASSWORD.trim()) || '8yc7zuc8z*A';
+const dbName = (process.env.DB_NAME && process.env.DB_NAME.trim()) || 'u339048620_stkreq';
+const dbPort = Number(process.env.DB_PORT) || 3306;
+
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'auth-db1408.hstgr.io',
-  user: process.env.DB_USER || 'u339048620_stkreq',
-  password: process.env.DB_PASSWORD || '8yc7zuc8z*A',
-  database: process.env.DB_NAME || 'u339048620_stkreq',
-  port: Number(process.env.DB_PORT) || 3306,
+  host: dbHost,
+  user: dbUser,
+  password: dbPassword,
+  database: dbName,
+  port: dbPort,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,

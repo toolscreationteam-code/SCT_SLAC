@@ -174,10 +174,16 @@ async function processMentionsAndNotify(channelId, senderId, content, messageId)
 // 1. Health check & DB status
 app.get('/api/health', async (req, res) => {
   try {
-    await pool.query('SELECT 1');
-    res.json({ status: 'ok', db: 'connected', time: new Date() });
+    const [rows] = await pool.query('SELECT 1 as test');
+    res.json({ status: 'ok', db: 'connected', test: rows[0]?.test, time: new Date() });
   } catch (err) {
-    res.status(500).json({ status: 'error', error: err.message });
+    console.error('DB Health Error:', err);
+    res.status(500).json({ 
+      status: 'error', 
+      error: err.message || err.code || err.sqlMessage || String(err),
+      code: err.code,
+      sqlMessage: err.sqlMessage 
+    });
   }
 });
 
